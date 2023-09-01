@@ -24,8 +24,7 @@ LANGUAGE_TABLE = {
 	}
 class Prompt:
 	    def __init__(self):
-	        self.msg_list = []
-	        self.msg_list.append(f"AI:{LANGUAGE_TABLE[chat_language]}")
+	    	    self.msg_list = [f"AI:{LANGUAGE_TABLE[chat_language]}"]
 	    
 	    def add_msg(self, new_msg):
 	        if len(self.msg_list) >= MSG_LIST_LIMIT:
@@ -67,37 +66,35 @@ chatgpt = ChatGPT()
 
 @csrf_exempt
 def callback(request):
-    if request.method == 'POST':
-        signature = request.META['HTTP_X_LINE_SIGNATURE']
-        body = request.body.decode('utf-8')
-        try:
-            events = parser.parse(body, signature)
-        except InvalidSignatureError:
-            return HttpResponseForbidden()
-        except LineBotApiError:
-            return HttpResponseBadRequest()
+	    if request.method != 'POST':
+	    	    return HttpResponseBadRequest()
+	    signature = request.META['HTTP_X_LINE_SIGNATURE']
+	    body = request.body.decode('utf-8')
+	    try:
+	        events = parser.parse(body, signature)
+	    except InvalidSignatureError:
+	        return HttpResponseForbidden()
+	    except LineBotApiError:
+	        return HttpResponseBadRequest()
 
-        for event in events:
-            if isinstance(event, MessageEvent):
-                if isinstance(event.message, TextMessage):
+	    for event in events:
+	        if isinstance(event, MessageEvent):
+	            if isinstance(event.message, TextMessage):
             ##############
-                    user_message = event.message.text        
-                    chatgpt.add_msg(f"HUMAN:{user_message}?\n")
-                                
-                    reply_msg = chatgpt.get_response().replace("AI:", "", 1)
+	                user_message = event.message.text        
+	                chatgpt.add_msg(f"HUMAN:{user_message}?\n")
 
-                    line_bot_api.reply_message(
-                        event.reply_token,
-                        TextSendMessage(text=reply_msg)
-                        )
-            ##########################
+	                reply_msg = chatgpt.get_response().replace("AI:", "", 1)
 
-                     
-                                              
-                
-        return HttpResponse()
+	                line_bot_api.reply_message(
+	                    event.reply_token,
+	                    TextSendMessage(text=reply_msg)
+	                    )
+	        ##########################
 
-    else:
-        return HttpResponseBadRequest()
+
+
+
+	    return HttpResponse()
 
 
